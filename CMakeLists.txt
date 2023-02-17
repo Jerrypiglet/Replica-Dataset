@@ -22,6 +22,14 @@ if(NOT ${Pangolin_FOUND})
     set(Pangolin_LIBRARIES "${THIRD_PARTY}/Pangolin/build/src/libpangolin.so")
 endif()
 
+find_package(OpenEXR QUIET)
+if(OpenEXR_FOUND)
+  set(HAVE_OPENEXR 1)
+  list(APPEND INTERNAL_INC ${OpenEXR_INCLUDE_DIR} )
+  list(APPEND LINK_LIBS ${OpenEXR_LIBRARY} )
+  message(STATUS "libopenexr Found and Enabled")
+endif()
+
 find_package(dl REQUIRED)
 
 add_subdirectory("./ReplicaSDK")

@@ -3,12 +3,13 @@
 #include <PTexLib.h>
 #include <pangolin/image/image_convert.h>
 
+#include "FileParser.h"
 #include "GLCheck.h"
 #include "MirrorRenderer.h"
-
+#include "DumpEXR.h"
 
 int main(int argc, char* argv[]) {
-  ASSERT(argc == 3 || argc == 4, "Usage: ./ReplicaRenderer mesh.ply /path/to/atlases [mirrorFile]");
+  ASSERT(argc >= 3 && argc <= 6, "Usage: ./ReplicaRenderer mesh.ply /path/to/atlases [mirrorFile] /path/to/openCVCameraFile /path/to/intrinsicMatrixFile");
 
   const std::string meshFile(argv[1]);
   const std::string atlasFolder(argv[2]);
@@ -16,20 +17,40 @@ int main(int argc, char* argv[]) {
   ASSERT(pangolin::FileExists(atlasFolder));
 
   std::string surfaceFile;
-  if (argc == 4) {
+  if (argc >= 4) {
     surfaceFile = std::string(argv[3]);
     ASSERT(pangolin::FileExists(surfaceFile));
   }
 
-  const int width = 1280;
-  const int height = 960;
+  std::string openCVCameraFile;
+  if (argc >= 5) {
+    openCVCameraFile = std::string(argv[4]);
+    ASSERT(pangolin::FileExists(openCVCameraFile));
+  }
+
+  std::string intrinsicMatrixFile;
+  if (argc >= 6) {
+    intrinsicMatrixFile = std::string(argv[5]);
+    ASSERT(pangolin::FileExists(intrinsicMatrixFile));
+  }
+
+  // Set up file stream
+  std::fstream fileStream;
+
+  // Read from intrinsicMatrixFile
+  fileStream.open(intrinsicMatrixFile);
+  const int height = parseInt(fileStream);
+  const int width = parseInt(fileStream);
+  Eigen::Matrix3d intrinsicCameraMatrix(parseMatrix3d(fileStream));
+  fileStream.close();
+
   bool renderDepth = true;
   float depthScale = 65535.0f * 0.1f;
 
   // Setup EGL
   EGLCtx egl;
 
-  egl.PrintInformation();
+  // egl.PrintInformation();
   
   if(!checkGLVersion()) {
     return 1;
@@ -40,33 +61,36 @@ int main(int argc, char* argv[]) {
   glFrontFace(frontFace);
 
   // Setup a framebuffer
-  pangolin::GlTexture render(width, height);
+  // pangolin::GlTexture render(width, height);
+  pangolin::GlTexture render(width, height, GL_RGB32F, true, 0, GL_RGB, GL_FLOAT, 0);
   pangolin::GlRenderBuffer renderBuffer(width, height);
   pangolin::GlFramebuffer frameBuffer(render, renderBuffer);
 
   pangolin::GlTexture depthTexture(width, height, GL_R32F, false, 0, GL_RED, GL_FLOAT, 0);
   pangolin::GlFramebuffer depthFrameBuffer(depthTexture, renderBuffer);
 
+
+  
   // Setup a camera
   pangolin::OpenGlRenderState s_cam(
       pangolin::ProjectionMatrixRDF_BottomLeft(
           width,
           height,
-          width / 2.0f,
-          width / 2.0f,
-          (width - 1.0f) / 2.0f,
-          (height - 1.0f) / 2.0f,
+          intrinsicCameraMatrix(0, 0), // fx K[0][0]
+          intrinsicCameraMatrix(1, 1), // fy K[1][1]
+          intrinsicCameraMatrix(0, 2), // u0 K[0][2]
+          intrinsicCameraMatrix(1, 2), // v0 K[1][2]
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 4, 0, 0, 0, 0, 1, 0));
+      // pangolin::ModelViewLookAtRDF(0, 0, 4, 0, 0, 0, 0, 1, 0));
+      pangolin::ModelViewLookAtRDF(-0.336, 2.372, 0.004, -0.336+0.9074, 2.372-0.1819, 0.004-0.3788, 0.371, -0.074, 0.925));
 
   // Start at some origin
-  Eigen::Matrix4d T_camera_world = s_cam.GetModelViewMatrix();
+  // Eigen::Matrix4d T_camera_world = s_cam.GetModelViewMatrix();
 
   // And move to the left
-  Eigen::Matrix4d T_new_old = Eigen::Matrix4d::Identity();
-
-  T_new_old.topRightCorner(3, 1) = Eigen::Vector3d(0.025, 0, 0);
+  // Eigen::Matrix4d T_new_old = Eigen::Matrix4d::Identity();
+  // T_new_old.topRightCorner(3, 1) = Eigen::Vector3d(0.025, 0, 0);
 
   // load mirrors
   std::vector<MirrorSurface> mirrors;
@@ -87,15 +111,31 @@ int main(int argc, char* argv[]) {
   // load mesh and textures
   PTexMesh ptexMesh(meshFile, atlasFolder);
 
-  pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
+  // pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
+  pangolin::TypedImage image(width, height, pangolin::PixelFormatFromString("RGB96F"));
   pangolin::ManagedImage<float> depthImage(width, height);
   pangolin::ManagedImage<uint16_t> depthImageInt(width, height);
 
+  // Read from openCVCameraFile
+  fileStream.open(openCVCameraFile);
+
   // Render some frames
-  const size_t numFrames = 100;
+  const size_t numFrames = parseInt(fileStream);
   for (size_t i = 0; i < numFrames; i++) {
     std::cout << "\rRendering frame " << i + 1 << "/" << numFrames << "... ";
     std::cout.flush();
+
+    // Move the camera
+    Eigen::Vector3d cameraOrigin(parseVector3d(fileStream));
+    Eigen::Vector3d cameraLookAt(parseVector3d(fileStream));
+    Eigen::Vector3d cameraUp(parseVector3d(fileStream));
+
+    
+    // s_cam.GetModelViewMatrix() = parseMatrix4d(fileStream);
+    // s_cam.GetModelViewMatrix() = pangolin::ModelViewLookAtRDF(-0.336, 2.372, 0.004, -0.336+0.9074, 2.372-0.1819, 0.004-0.3788, 0.371, -0.074, 0.925);
+    s_cam.GetModelViewMatrix() = pangolin::ModelViewLookAtRDF(cameraOrigin(0), cameraOrigin(1), cameraOrigin(2),
+                                                              cameraLookAt(0), cameraLookAt(1), cameraLookAt(2),
+                                                              cameraUp(0), cameraUp(1), cameraUp(2));
 
     // Render
     frameBuffer.Bind();
@@ -128,16 +168,29 @@ int main(int argc, char* argv[]) {
       frameBuffer.Unbind();
     }
 
-    // Download and save
-    render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
-
     char filename[1000];
-    snprintf(filename, 1000, "frame%06zu.jpg", i);
+    snprintf(filename, 1000, "frame%06zu.exr", i);
 
-    pangolin::SaveImage(
-        image.UnsafeReinterpret<uint8_t>(),
-        pangolin::PixelFormatFromString("RGB24"),
-        std::string(filename));
+    // Download and save
+    // render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+    // pangolin::SaveImage(
+    //     image.UnsafeReinterpret<uint8_t>(),
+    //     pangolin::PixelFormatFromString("RGB24"),
+    //     std::string(filename));
+
+    render.Download(image);
+    // pangolin::SaveImage(image, std::string(filename));
+
+    SaveExr(
+      image,
+      // .UnsafeReinterpret<uint8_t>(),
+      // .UnsafeReinterpret<float_t>(), 
+      pangolin::PixelFormatFromString("RGB96F"),
+      std::string(filename),
+      true
+    );
+        
 
     if (renderDepth) {
       // render depth
@@ -169,11 +222,13 @@ int main(int argc, char* argv[]) {
     }
 
     // Move the camera
-    T_camera_world = T_camera_world * T_new_old.inverse();
+    // T_camera_world = T_camera_world * T_new_old.inverse();
 
-    s_cam.GetModelViewMatrix() = T_camera_world;
+    // s_cam.GetModelViewMatrix() = T_camera_world;
   }
   std::cout << "\rRendering frame " << numFrames << "/" << numFrames << "... done" << std::endl;
+
+  fileStream.close();
 
   return 0;
 }

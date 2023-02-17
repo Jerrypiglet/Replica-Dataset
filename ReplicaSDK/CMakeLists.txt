@@ -20,17 +20,20 @@ add_library(ptex SHARED
 target_link_libraries(ptex
                       ${Eigen_LIBRARIES}
                       ${Pangolin_LIBRARIES}
+                      ${OpenEXR_LIBRARY}
                       ${dl_LIBRARIES}
                       stdc++fs
 )
 target_include_directories(ptex PUBLIC
             ${Pangolin_INCLUDE_DIRS}
+            ${OpenEXR_INCLUDE_DIR}
             ${Eigen_INCLUDE_DIRS}
             ${dl_INCLUDE_DIRS}
             ${CMAKE_CURRENT_LIST_DIR}
 )
 
 include_directories(${Pangolin_INCLUDE_DIRS})
+include_directories(${OpenEXR_INCLUDE_DIR})
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${dl_INCLUDE_DIRS})
 include_directories("./include")
@@ -39,6 +42,7 @@ add_executable(ReplicaViewer src/viewer.cpp src/MirrorSurface.cpp)
 
 target_link_libraries(ReplicaViewer
                       ${Pangolin_LIBRARIES}
+                      ${OpenEXR_LIBRARY}
                       ${dl_LIBRARIES}
                       GL
                       GLEW
@@ -50,6 +54,7 @@ add_executable(ReplicaRenderer src/render.cpp src/MirrorSurface.cpp)
 
 target_link_libraries(ReplicaRenderer
                       ${Pangolin_LIBRARIES}
+                      ${OpenEXR_LIBRARY}
                       ${dl_LIBRARIES}
                       GL
                       GLEW

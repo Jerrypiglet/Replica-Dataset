@@ -1,0 +1,25 @@
+{
+    "include": [
+      "ReplicaSDF"
+    ],
+    
+    "exclude": [
+        "**/.git", 
+        "**/.DS_Store", 
+        "**/3rdparty/**", 
+        "**/build/**", 
+        "**/public/**", 
+        "**/public_re/**", 
+        "**/public_re20/**", 
+        "**/public_re_2/**", 
+        "**/public_re_3/**", 
+        "**/public_re_3_v2pose/**", 
+        "**/public_re_3_v2pose_2048/**", 
+        "**/public_re_4_2048/**", 
+        "**/public_tmp/**", 
+        "**/rendering/**", 
+        "**/data/**",
+        "**/code/utils_OR/DatasetCreation/cluster_all", 
+        "**/code/utils_OR/DatasetCreation/cluster_all/**", 
+],
+}

@@ -17,6 +17,11 @@ For machine learning purposes each dataset also contains an export to the format
 employed by [AI Habitat](https://www.aihabitat.org/) and is therefore usable
 seamlessly in that framework for AI agent training and other ML tasks.
 
+## Notes by Rui
+``` bash
+/home/ruizhu/Documents/Projects/Replica-Dataset/build/ReplicaSDK/ReplicaRenderer ~/Documents/data/replica_v1/office_2/mesh.ply ~/Documents/data/replica_v1/office_2/textures/  ~/Documents/data/replica_v1/office_2/glass.sur /home/ruizhu/Documents/Projects/Replica-Dataset/cam_extra_transform.txt /home/ruizhu/Documents/Projects/Replica-Dataset/intrinsic_mitsubaScene.txt
+```
+
 ## Citing the Replica Dataset
 
 If you use the Replica dataset in your research directly or indirectly via derivative datasets or frameworks, please cite the following

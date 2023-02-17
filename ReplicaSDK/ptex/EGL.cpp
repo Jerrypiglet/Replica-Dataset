@@ -121,12 +121,12 @@ EGLCtx::EGLCtx(const bool createCtx, const int cudaDevice, const bool createSurf
 
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
         (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-    if(foundCudaDev) {
+    // if(foundCudaDev) {
       display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[eglDevId], 0);
-    } else {
-      Display* x11 = XOpenDisplay(NULL);
-      display = eglGetPlatformDisplayEXT(EGL_PLATFORM_X11_KHR, x11, 0);
-    }
+    // } else {
+    //   Display* x11 = XOpenDisplay(NULL);
+    //   display = eglGetPlatformDisplayEXT(EGL_PLATFORM_X11_KHR, x11, 0);
+    // }
     ASSERT(display != EGL_NO_DISPLAY, "Can't create EGL display");
     
     EGLint major, minor;
@@ -156,15 +156,15 @@ EGLCtx::EGLCtx(const bool createCtx, const int cudaDevice, const bool createSurf
 
     GLenum err = glewInit();
 
-#ifdef GLEW_ERROR_NO_GLX_DISPLAY
-    if (err == GLEW_ERROR_NO_GLX_DISPLAY) {
-        std::cout << "Can't initialize EGL GLEW GLX display, may crash!" << std::endl;
-    }
-    else 
-#endif
-    if (err != GLEW_OK) {
-        ASSERT(false, "Can't initialize EGL, glewInit failing completely.");
-    }
+// #ifdef GLEW_ERROR_NO_GLX_DISPLAY
+//     if (err == GLEW_ERROR_NO_GLX_DISPLAY) {
+//         std::cout << "Can't initialize EGL GLEW GLX display, may crash!" << std::endl;
+//     }
+//     else 
+// #endif
+    // if (err != GLEW_OK) {
+    //     ASSERT(false, "Can't initialize EGL, glewInit failing completely.");
+    // }
 
     // Setup default OpenGL parameters
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);

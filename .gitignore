@@ -1,3 +1,11 @@
 build
 *~
 *.swp
+frame*
+3rdparty
+depth*
+archive
+CMakeModules
+# cam_extra*
+cmake
+# intrinsic*
