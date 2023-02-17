@@ -39,8 +39,8 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder) 
   if (isHdr) {
     // set defaults for HDR scene
     exposure = 0.025f;
-    gamma = 1.6969f;
-    saturation = 1.5f;
+    // gamma = 1.6969f;
+    // saturation = 1.5f;
   }
 
   // Load shader
